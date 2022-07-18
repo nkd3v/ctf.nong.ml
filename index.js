@@ -1,6 +1,9 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
+
 const app = express();
 
+app.use(cookieParser('secret'));
 app.set('view engine', 'ejs');
 app.disable('x-powered-by');
 
@@ -9,15 +12,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/lonely-doge', (req, res) => {
-  let visitCount = parseInt(req.headers.cookie?.split('=')[1]);
-  console.log(visitCount)
-  if (isNaN(visitCount) || visitCount < 1) {
-    res.setHeader('Set-Cookie', 'v=1; httponly');
-  } else {
-    res.setHeader('Set-Cookie', `v=${++visitCount}; httponly`);
-  }
-  res.render('lonely-doge', {visitCount});
+  const visit = parseInt(req.signedCookies['v']) + 1 || 1;
+  res.cookie('v', visit, { signed: true, httpOnly: true, secure: true, sameSite: 'strict' });
+  res.render('lonely-doge', { visit });
 })
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
